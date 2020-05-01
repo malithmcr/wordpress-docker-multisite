@@ -1,0 +1,62 @@
+version: '3.3'
+
+services:
+  # Database
+  db:
+    image: mysql:5.7
+    container_name: mysqldb
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      DB_HOST: localhost
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    networks:
+      - wpsite
+    ports:
+      - "3306:3306"
+  # phpmyadmin
+  phpmyadmin:
+    depends_on:
+      - db
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - '8080:80'
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: password
+    networks:
+      - wpsite
+  # Wordpress
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:latest
+    ports:
+      - '80:80'
+    restart: always
+    container_name: modern_wordpress
+    volumes: ['./public/:/var/www/html']
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_CONFIG_EXTRA: define('WP_ALLOW_MULTISITE', true );
+    hostname: modernwordpress.com.local
+    labels:
+       com.theimpossiblecode.expose.domain: "modernwordpress.com.local"
+       com.theimpossiblecode.expose.domainIsHost: "true"
+       com.theimpossiblecode.expose.subdomainHosts: "de at it"
+    networks:
+      wpsite:
+          aliases:
+            - modernwordpress.com.local
+networks:
+  wpsite:
+volumes:
+  db_data:
